@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Public Reaction Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-1: #050816;
+      --bg-2: #140f2f;
+      --bg-3: #1e0d24;
+      --text: #f6f7ff;
+      --muted: #c2cae4;
+      --card: rgba(255, 255, 255, 0.09);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --primary: #18f2b2;
+      --primary-2: #42d6ff;
+      --positive: #3af3a6;
+      --negative: #ff5c95;
+      --warning: #ffd166;
+      --shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Manrope", sans-serif;
+      background:
+        radial-gradient(35rem 22rem at 8% 12%, rgba(66, 214, 255, 0.22), transparent 60%),
+        radial-gradient(32rem 18rem at 92% 14%, rgba(255, 92, 149, 0.24), transparent 58%),
+        radial-gradient(38rem 24rem at 50% 95%, rgba(24, 242, 178, 0.16), transparent 65%),
+        linear-gradient(120deg, var(--bg-1), var(--bg-2) 48%, var(--bg-3));
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1200px, 92vw);
+      margin: 0 auto;
+      padding: 2.2rem 0 3rem;
+    }
+
+    .hero {
+      background: linear-gradient(130deg, rgba(66, 214, 255, 0.18), rgba(255, 92, 149, 0.14));
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      backdrop-filter: blur(8px);
+    }
+
+    h1, h2, h3 {
+      font-family: "Space Grotesk", sans-serif;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      padding: 0.38rem 0.75rem;
+    }
+
+    .desc {
+      color: var(--muted);
+      max-width: 70ch;
+      margin-top: 0.8rem;
+      margin-bottom: 1.1rem;
+      line-height: 1.55;
+    }
+
+    .search-bar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.7rem;
+    }
+
+    input, button, select {
+      border: 0;
+      border-radius: 12px;
+      padding: 0.85rem 0.95rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    input, select {
+      background: rgba(255, 255, 255, 0.92);
+      color: #101533;
+    }
+
+    button {
+      font-weight: 700;
+      color: #02152c;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .btn-main {
+      background: linear-gradient(130deg, var(--primary), var(--primary-2));
+    }
+
+    .btn-main:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(66, 214, 255, 0.4);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1.2rem;
+    }
+
+    .card {
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      background: var(--card);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .tech-list {
+      margin: 0.55rem 0 0;
+      padding-left: 1rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .featured, .results {
+      margin-top: 1.3rem;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .featured-media {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      min-height: 250px;
+      background: #101533;
+      position: relative;
+    }
+
+    .featured-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.2);
+      display: block;
+    }
+
+    .featured-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 0.8rem;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0));
+    }
+
+    .featured-title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .featured-sub {
+      margin-top: 0.35rem;
+      color: #d8def7;
+      font-size: 0.78rem;
+    }
+
+    .btn-secondary {
+      margin-top: 0.85rem;
+      background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(220, 232, 255, 0.95));
+    }
+
+    .status {
+      margin-top: 0.8rem;
+      min-height: 1.2rem;
+      color: var(--warning);
+      font-weight: 700;
+    }
+
+    .results[hidden] {
+      display: none;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat h3 {
+      font-size: 1.4rem;
+      margin-top: 0.3rem;
+    }
+
+    .stat small {
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.8px;
+    }
+
+    .stat.positive h3 {
+      color: var(--positive);
+    }
+
+    .stat.negative h3 {
+      color: var(--negative);
+    }
+
+    .loading-wrap {
+      margin-top: 0.7rem;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+      display: none;
+    }
+
+    .loading-wrap.active {
+      display: block;
+    }
+
+    .loading-bar {
+      width: 40%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2), #8dff6d);
+      animation: slide 1.2s linear infinite;
+      box-shadow: 0 0 16px rgba(66, 214, 255, 0.65);
+    }
+
+    @keyframes slide {
+      from { transform: translateX(-120%); }
+      to { transform: translateX(320%); }
+    }
+
+    .single-chart {
+      margin-bottom: 1rem;
+    }
+
+    .comment-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .comment-list {
+      max-height: 340px;
+      overflow: auto;
+      padding-right: 0.35rem;
+    }
+
+    .comment-row {
+      padding: 0.75rem;
+      border-radius: 12px;
+      margin-bottom: 0.6rem;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 0.2rem 0.62rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
+    .chip.positive {
+      background: rgba(56, 211, 159, 0.2);
+      color: #89ffd2;
+      border: 1px solid rgba(56, 211, 159, 0.5);
+    }
+
+    .chip.negative {
+      background: rgba(255, 93, 143, 0.18);
+      color: #ffb4ca;
+      border: 1px solid rgba(255, 93, 143, 0.45);
+    }
+
+    .score {
+      color: #e9ecff;
+      font-size: 0.78rem;
+    }
+
+    .comment-text {
+      margin-top: 0.5rem;
+      color: #f3f4ff;
+      line-height: 1.45;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+      .search-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .comment-columns {
+        grid-template-columns: 1fr;
+      }
+
+      .featured-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-top">
+        <h1>YouTube Public Reaction Analyzer</h1>
+        <span class="tag">FastAPI + Scikit-learn + YouTube Data API</span>
+      </div>
+      <p class="desc">
+        Analyze public reaction by fetching top comments from a YouTube video, classifying sentiment using a trained sklearn model pipeline, and visualizing confidence and polarity through live charts.
+      </p>
+      <div class="search-bar">
+        <input id="youtubeUrl" type="url" placeholder="Paste YouTube URL (watch, shorts, or youtu.be)">
+        <select id="maxComments">
+          <option value="100">100 comments</option>
+          <option value="200">200 comments</option>
+          <option value="300" selected>300 comments</option>
+          <option value="500">500 comments</option>
+        </select>
+        <button class="btn-main" id="analyzeBtn">Analyze Now</button>
+      </div>
+      <div id="status" class="status"></div>
+      <div id="loadingWrap" class="loading-wrap">
+        <div class="loading-bar"></div>
+      </div>
+    </section>
+
+    <section class="featured card">
+      <h2>Featured Demo Video</h2>
+      <p class="desc">Tap this sample to instantly run analysis, or paste your own YouTube URL above.</p>
+      <div class="featured-grid">
+        <article class="featured-media">
+          <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Demo video thumbnail" loading="lazy">
+          <div class="featured-overlay">
+            <p class="featured-title">Never Gonna Give You Up</p>
+            <p class="featured-sub">Quick test sample</p>
+          </div>
+        </article>
+        <div class="card">
+          <h3>How It Works</h3>
+          <ul class="tech-list">
+            <li>FastAPI endpoint reads your video URL and extracts the video id.</li>
+            <li>YouTube Data API fetches public top-level comments.</li>
+            <li>Scikit-learn sentiment model predicts Positive/Negative label.</li>
+            <li>Dashboard shows one visual chart plus grouped comment tags.</li>
+          </ul>
+          <button id="runDemoBtn" class="btn-secondary">Run Demo Analysis</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="results card" hidden>
+      <h2>Sentiment Dashboard</h2>
+      <p id="videoMeta" class="desc"></p>
+
+      <div class="stats">
+        <div class="card stat">
+          <small>Total Comments</small>
+          <h3 id="statTotal">0</h3>
+        </div>
+        <div class="card stat positive">
+          <small>Positive</small>
+          <h3 id="statPositive">0</h3>
+        </div>
+        <div class="card stat negative">
+          <small>Negative</small>
+          <h3 id="statNegative">0</h3>
+        </div>
+        <div class="card stat">
+          <small>Positive Rate</small>
+          <h3 id="statPositiveRate">0%</h3>
+        </div>
+      </div>
+
+      <div class="single-chart card">
+        <h3>Sentiment Split</h3>
+        <canvas id="sentimentPie"></canvas>
+      </div>
+
+      <div class="comment-columns">
+        <div class="card">
+          <h3>Positive Comments</h3>
+          <div id="positiveList" class="comment-list"></div>
+        </div>
+        <div class="card">
+          <h3>Negative Comments</h3>
+          <div id="negativeList" class="comment-list"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const youtubeUrlInput = document.getElementById("youtubeUrl");
+    const maxCommentsInput = document.getElementById("maxComments");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const runDemoBtn = document.getElementById("runDemoBtn");
+    const statusText = document.getElementById("status");
+    const loadingWrap = document.getElementById("loadingWrap");
+    const resultsSection = document.getElementById("results");
+    const videoMeta = document.getElementById("videoMeta");
+    const positiveList = document.getElementById("positiveList");
+    const negativeList = document.getElementById("negativeList");
+
+    let pieChart = null;
+
+    function setStatus(message, isError = false) {
+      statusText.textContent = message;
+      statusText.style.color = isError ? "var(--negative)" : "var(--warning)";
+    }
+
+    function renderCharts(positive, negative) {
+      const pieCtx = document.getElementById("sentimentPie").getContext("2d");
+
+      if (pieChart) pieChart.destroy();
+
+      pieChart = new Chart(pieCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Positive", "Negative"],
+          datasets: [{
+            data: [positive, negative],
+            backgroundColor: ["#38d39f", "#ff5d8f"],
+            borderWidth: 0,
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          cutout: "64%",
+          plugins: {
+            legend: {
+              labels: { color: "#f1f3ff", usePointStyle: true }
+            }
+          }
+        }
+      });
+    }
+
+    function renderComments(items) {
+      const positives = (items || []).filter((row) => row.sentiment === "POSITIVE");
+      const negatives = (items || []).filter((row) => row.sentiment === "NEGATIVE");
+
+      positiveList.innerHTML = positives.map((row) => {
+        return `
+          <article class="comment-row">
+            <span class="chip positive">POSITIVE</span>
+            <span class="score">Confidence: ${row.confidence}%</span>
+            <div class="comment-text">${row.text}</div>
+          </article>
+        `;
+      }).join("") || `<article class="comment-row"><div class="comment-text">No positive sample comments.</div></article>`;
+
+      negativeList.innerHTML = negatives.map((row) => {
+        const positive = row.sentiment === "POSITIVE";
+        return `
+          <article class="comment-row">
+            <span class="chip ${positive ? "positive" : "negative"}">${row.sentiment}</span>
+            <span class="score">Confidence: ${row.confidence}%</span>
+            <div class="comment-text">${row.text}</div>
+          </article>
+        `;
+      }).join("") || `<article class="comment-row"><div class="comment-text">No negative sample comments.</div></article>`;
+    }
+
+    async function analyzeVideo() {
+      const youtubeUrl = youtubeUrlInput.value.trim();
+      const maxComments = maxCommentsInput.value;
+
+      if (!youtubeUrl) {
+        setStatus("Paste a YouTube URL first.", true);
+        return;
+      }
+
+      setStatus("Analyzing comments...");
+      analyzeBtn.disabled = true;
+      runDemoBtn.disabled = true;
+      loadingWrap.classList.add("active");
+
+      try {
+        const query = new URLSearchParams({
+          youtube_url: youtubeUrl,
+          max_comments: maxComments
+        });
+
+        const response = await fetch(`/analyze?${query.toString()}`);
+        const data = await response.json();
+
+        if (data.error) {
+          setStatus(data.error, true);
+          analyzeBtn.disabled = false;
+          runDemoBtn.disabled = false;
+          loadingWrap.classList.remove("active");
+          return;
+        }
+
+        document.getElementById("statTotal").textContent = data.total_comments_analyzed;
+        document.getElementById("statPositive").textContent = data.positive;
+        document.getElementById("statNegative").textContent = data.negative;
+        document.getElementById("statPositiveRate").textContent = `${data.positive_percent}%`;
+        videoMeta.textContent = `Video ID: ${data.video_id} | Positive: ${data.positive_percent}% | Negative: ${data.negative_percent}%`;
+
+        renderCharts(data.positive, data.negative);
+        renderComments(data.sample_results);
+
+        resultsSection.hidden = false;
+        setStatus("Analysis complete.");
+      } catch (err) {
+        setStatus("Something went wrong while analyzing this video.", true);
+      } finally {
+        analyzeBtn.disabled = false;
+        runDemoBtn.disabled = false;
+        loadingWrap.classList.remove("active");
+      }
+    }
+
+    analyzeBtn.addEventListener("click", analyzeVideo);
+    runDemoBtn.addEventListener("click", () => {
+      youtubeUrlInput.value = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+      analyzeVideo();
+    });
+    youtubeUrlInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        analyzeVideo();
+      }
+    });
+  </script>
+</body>
+</html>
