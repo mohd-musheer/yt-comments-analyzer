@@ -4,9 +4,9 @@ An AI-powered web application that analyzes YouTube comments in real time and ge
 
 This project combines NLP, FastAPI, YouTube Data API, interactive UI, and Dockerized deployment into a full-stack AI application.
 
-:globe_with_meridians: Live App: https://youtube-comments-sentiment-analysis-ai.onrender.com
-:link: GitHub: https://github.com/mohd-musheer/youtube-comments-sentiment-analysis
-:whale: Docker: https://hub.docker.com/r/mohdmusheer/youtube-comments-sentiment-analysis
+:globe_with_meridians: Live App: https://youtube-comments-sentiment-analysis-ai.onrender.com <Br>
+:link: GitHub: https://github.com/mohd-musheer/youtube-comments-sentiment-analysis <Br>
+:whale: Docker: https://hub.docker.com/r/mohdmusheer/youtube-comments-sentiment-analysis <Br>
 
 
 🚀 Project Overview
